@@ -1,6 +1,8 @@
+use std::alloc::handle_alloc_error;
 use std::fs::{self, metadata, File, Metadata};
-use std::env;
+use std::{env, process};
 use std::net::Ipv4Addr;
+use std::os::unix::net::SocketAddr;
 use std::process::Command;
 use std::thread::spawn;
 use serde::{Deserialize,Serialize};
@@ -9,12 +11,6 @@ use serde_json::Value;
 use std::io::prelude::*;
 use std::io::BufReader;
 use std::{thread,time};
-
-
-
-
-
-
 
 
 
@@ -83,16 +79,36 @@ struct ProcessOpener{
 
 }
 
-pub fn operation_mac_os(file_path:&str){
+
+
+pub fn operation_mac_os(file_path:&String){
     //TODO
     // Open the app , load the profile settings and check what the time they want to see the file before closing and deleting is 
     // Check if they want to send the file to a server before ,  to change the metadata before so
     // First open the app 
+    // Open for Mac 
 
+    let file_p = file_path.clone();
+    let time_used:Result<u64,_> = GetFileProfile::new().time_file().parse();
+
+
+    // Make a thread here to also do the awaiting 
     let handle = thread::spawn(move ||
     {
-        //TODO
+        let mut binding = Command::new("open");
+        let dur_seconds = time::Duration::from_secs(time_used.unwrap());
+        let mut g = binding.arg(file_p);
+        if let Ok(mut process) = g.spawn(){
+            thread::sleep(dur_seconds);
+            process.kill();
+            println!("{}",process.id());
+        }       
+        else {
+            println!("yey");
+        }
+
     });
+    handle.join().unwrap();
 
 }
 
@@ -103,7 +119,9 @@ pub fn operation_unix(){
 
 
 pub fn operation_windows(){
-    //TODO
+    // Looks something like
+    //Command("Command"),("Powershell"), args =["Start-Process"],etc..
+    // Start-Process for windows
 }
 impl ProcessOpener{
     fn new(file_path:String) -> Self{
@@ -141,8 +159,6 @@ struct FileMetadata{
 }
 
 
-
-
 impl FileMetadata{
     fn new(file_path:String) -> Self{
        FileMetadata{file_path,metadata:None}   
@@ -165,15 +181,15 @@ impl FileMetadata{
 
 fn main() -> std::io::Result<()>{
     //let time = GetFileProfile::new().time_file();
-    let time = GetFileProfile::new().send_data_to_server();
-    println!("{}",time);
-    let send_data = GetFileProfile::new().send_data_to_server();
+    //let time = GetFileProfile::new().send_data_to_server();
+    //println!("{}",time);
+    //let send_data = GetFileProfile::new().send_data_to_server();
+    let b =operation_mac_os(&"/Users/bazbooper/Desktop/something.txt".to_string());
+    //println!("{:?}",b);
+    //Command::new("open").arg("/Users/bazbooper/Desktop/something.txt").spawn();
 
+    
 
-
-   for i in 0..=1{
-    println!("Hi");
-   }
    Ok(())
 
 
