@@ -1,6 +1,6 @@
 
 
-# I made this tool because i was bored 
+# I made this tool because i was bored , I think this project is one i also should revisit
 
 
 # What it does ?
