@@ -1,14 +1,14 @@
 use std::alloc::handle_alloc_error;
 use std::fs::{self, metadata, File, Metadata};
-use std::{env, process};
+use std::{env, process, string};
 use std::net::Ipv4Addr;
 use std::os::unix::net::SocketAddr;
-use std::process::Command;
+use std::process::{Command, Stdio};
 use std::thread::spawn;
 use serde::{Deserialize,Serialize};
 use serde_json::map::Values;
 use serde_json::Value;
-use std::io::prelude::*;
+use std::io::{prelude::*, stdout};
 use std::io::BufReader;
 use std::{thread,time};
 
@@ -35,7 +35,6 @@ impl Sender{
     }
 
 }
-
 
 fn clear_metadata_path(file_path:String){
     //TODO
@@ -81,6 +80,34 @@ struct ProcessOpener{
 
 
 
+// Mac 
+fn process_command_preview_pdf() -> String{
+    let output = Command::new("sh")
+        .arg("-c")
+        .arg("ps aux | grep \"Preview\" | grep -v grep | awk '{print $2}'")
+        .stdout(Stdio::piped())
+        .output()
+        .unwrap();
+        let stdout = String::from_utf8(output.stdout).unwrap();
+        let replaced = stdout.replace(" ,", "");
+        return replaced
+
+}
+fn process_command_preview_text() -> String{
+    let output = Command::new("sh")
+        .arg("-c")
+        .arg("ps aux | grep \"TextEdit\" | grep -v grep | awk '{print $2}'")
+        .stdout(Stdio::piped())
+        .output()
+        .unwrap();
+        let stdout = String::from_utf8(output.stdout).unwrap();
+        let replaced = stdout.replace(" ,", "");
+        return replaced
+
+
+
+}
+
 pub fn operation_mac_os(file_path:&String){
     //TODO
     // Open the app , load the profile settings and check what the time they want to see the file before closing and deleting is 
@@ -90,12 +117,11 @@ pub fn operation_mac_os(file_path:&String){
 
     let file_p = file_path.clone();
     let time_used:Result<u64,_> = GetFileProfile::new().time_file().parse();
-
-
     // Make a thread here to also do the awaiting 
     let handle = thread::spawn(move ||
     {
         let mut binding = Command::new("open");
+        //ps aux | grep "TextEdit" | grep -v grep - Command for finding the process for txt file
         let dur_seconds = time::Duration::from_secs(time_used.unwrap());
         let mut g = binding.arg(file_p);
         if let Ok(mut process) = g.spawn(){
@@ -184,9 +210,13 @@ fn main() -> std::io::Result<()>{
     //let time = GetFileProfile::new().send_data_to_server();
     //println!("{}",time);
     //let send_data = GetFileProfile::new().send_data_to_server();
-    let b =operation_mac_os(&"/Users/bazbooper/Desktop/something.txt".to_string());
+    // let b =operation_mac_os(&"/Users/bazbooper/Desktop/something.txt".to_string());
     //println!("{:?}",b);
     //Command::new("open").arg("/Users/bazbooper/Desktop/something.txt").spawn();
+    let some  = process_command_preview_pdf();
+    let b = process_command_preview_text();
+    println!("{},{}",some,b);
+
 
     
 
